@@ -8,6 +8,7 @@
 
 const FName AFernGullyLikeCharacter::FireUpBinding("FireUp");
 const FName AFernGullyLikeCharacter::FireRightBinding("FireRight");
+const FName AFernGullyLikeCharacter::LaserTraceParams(TEXT("LaserTrace"));
 
 AFernGullyLikeCharacter::AFernGullyLikeCharacter()
 {
@@ -42,7 +43,7 @@ AFernGullyLikeCharacter::AFernGullyLikeCharacter()
   GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f); // ...at this rotation rate
   GetCharacterMovement()->GravityScale = 0.f;
   GetCharacterMovement()->AirControl = 1.f;
-  GetCharacterMovement()->BrakingDecelerationFlying = 750.f;
+  GetCharacterMovement()->BrakingDecelerationFlying = 900.f;
   GetCharacterMovement()->MaxFlySpeed = 600.f;
   GetCharacterMovement()->SetMovementMode(MOVE_Flying);
   GetCharacterMovement()->SetGroundMovementMode(MOVE_Flying);
@@ -94,41 +95,36 @@ void AFernGullyLikeCharacter::Tick(float DeltaSeconds)
 
 void AFernGullyLikeCharacter::FireShot(FVector FireDirection)
 {
-  // If we it's ok to fire again
-  if (bCanFire == true)
+
+  // If we are pressing fire stick in a direction
+  if (FireDirection.SizeSquared() > 0.0f)
   {
-    // If we are pressing fire stick in a direction
-    if (FireDirection.SizeSquared() > 0.0f)
+    FRotator FireRotation = FireDirection.Rotation();
+
+    FVector SpawnLocation = GetActorLocation();
+
+    LaserEnd = SpawnLocation - FireDirection * 1000.f;
+
+    UWorld* const World = GetWorld();
+    if (World != NULL)
     {
-      const FRotator FireRotation = FireDirection.Rotation();
-      // Spawn projectile at an offset from this pawn
-      const FVector SpawnLocation = GetActorLocation();
+      // spawn the projectile
+      FHitResult hitRes(ForceInit);
 
-      const FVector EndLocation = SpawnLocation - FireDirection * 10000.f;
+      FCollisionQueryParams traceParams(LaserTraceParams, true, this);
 
-      UWorld* const World = GetWorld();
-      if (World != NULL)
-      {
-        // spawn the projectile
-        World->SpawnActor<AFernGullyLikeProjectile>(SpawnLocation, FireRotation);
-        DrawDebugLine(World, SpawnLocation, EndLocation, FColor(255, 0, 0), false, 5.f, 0, 50.f);
-      }
-
-      bCanFire = false;
-      World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &AFernGullyLikeCharacter::ShotTimerExpired, FireRate);
-
-      // try and play the sound if specified
-      if (FireSound != nullptr)
-      {
-        UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-      }
-
-      bCanFire = false;
+      if(World->LineTraceSingleByChannel(hitRes, SpawnLocation, LaserEnd, ECC_WorldStatic, traceParams))
+        DrawDebugLine(World, SpawnLocation, hitRes.ImpactPoint, FColor(255, 0, 0), false, 5.f, 0, 25.f);
+      else
+        DrawDebugLine(World, SpawnLocation, LaserEnd, FColor(255, 127, 0), false, 3.f, 0, 10.f);
     }
-  }
-}
 
-void AFernGullyLikeCharacter::ShotTimerExpired()
-{
-  bCanFire = true;
+    // try and play the sound if specified
+    //if (FireSound != nullptr)
+    //{
+    //  UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+    //}
+  }
+  else
+    LaserEnd = LaserEnd.ZeroVector;
 }

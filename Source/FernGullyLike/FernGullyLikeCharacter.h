@@ -22,6 +22,10 @@ protected:
   UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
     float FireRate;
 
+  /* Where is the laser reaching to */
+  UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+    FVector LaserEnd;
+
   /** Sound to play each time we fire */
   UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
   class USoundBase* FireSound;
@@ -40,12 +44,12 @@ protected:
   /* Fire a shot in the specified direction */
   void FireShot(FVector FireDirection);
 
-  /* Handler for the fire timer expiry */
-  void ShotTimerExpired();
-
   // Static names for axis bindings
   static const FName FireUpBinding;
   static const FName FireRightBinding;
+
+  // Static name for trace params
+  static const FName LaserTraceParams;
 
 private:
 
