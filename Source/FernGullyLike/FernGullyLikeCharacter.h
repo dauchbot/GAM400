@@ -18,21 +18,9 @@ class AFernGullyLikeCharacter : public ACharacter
 
 protected:
 
-  /** Offset from the ships location to spawn projectiles */
-  UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
-    FVector GunOffset;
-
-  /** Offset from the ships location to spawn projectiles */
-  UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
-    FVector Movement;
-
   /* How fast the weapon will fire */
   UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
     float FireRate;
-
-  /* The speed our ship moves around the level */
-  UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
-    float MoveSpeed;
 
   /** Sound to play each time we fire */
   UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
@@ -43,6 +31,12 @@ protected:
   virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
   // End Actor Interface
 
+  /** Called for side to side input */
+  void MoveRight(float Val);
+
+  /** Called for up-down input */
+  void MoveUp(float Val);
+
   /* Fire a shot in the specified direction */
   void FireShot(FVector FireDirection);
 
@@ -50,9 +44,7 @@ protected:
   void ShotTimerExpired();
 
   // Static names for axis bindings
-  static const FName MoveForwardBinding;
-  static const FName MoveRightBinding;
-  static const FName FireForwardBinding;
+  static const FName FireUpBinding;
   static const FName FireRightBinding;
 
 private:
