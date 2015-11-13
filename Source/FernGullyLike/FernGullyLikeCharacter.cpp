@@ -4,6 +4,7 @@
 #include "FernGullyLikeCharacter.h"
 #include "FernGullyLikeProjectile.h"
 #include "TimerManager.h"
+#include "DrawDebugHelpers.h"
 
 const FName AFernGullyLikeCharacter::FireUpBinding("FireUp");
 const FName AFernGullyLikeCharacter::FireRightBinding("FireRight");
@@ -27,7 +28,7 @@ AFernGullyLikeCharacter::AFernGullyLikeCharacter()
 	CameraBoom->AttachTo(RootComponent);
 	CameraBoom->bAbsoluteRotation = true; // Rotation of the character should not affect rotation of boom
 	CameraBoom->bDoCollisionTest = false;
-	CameraBoom->TargetArmLength = 500.f;
+	CameraBoom->TargetArmLength = 750.f;
 	CameraBoom->SocketOffset = FVector(0.f,0.f,75.f);
 	CameraBoom->RelativeRotation = FRotator(0.f,180.f,0.f);
 
@@ -41,7 +42,7 @@ AFernGullyLikeCharacter::AFernGullyLikeCharacter()
   GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f); // ...at this rotation rate
   GetCharacterMovement()->GravityScale = 0.f;
   GetCharacterMovement()->AirControl = 1.f;
-  GetCharacterMovement()->BrakingDecelerationFlying = 3.f;
+  GetCharacterMovement()->BrakingDecelerationFlying = 750.f;
   GetCharacterMovement()->MaxFlySpeed = 600.f;
   GetCharacterMovement()->SetMovementMode(MOVE_Flying);
   GetCharacterMovement()->SetGroundMovementMode(MOVE_Flying);
@@ -103,11 +104,14 @@ void AFernGullyLikeCharacter::FireShot(FVector FireDirection)
       // Spawn projectile at an offset from this pawn
       const FVector SpawnLocation = GetActorLocation();
 
+      const FVector EndLocation = SpawnLocation - FireDirection * 10000.f;
+
       UWorld* const World = GetWorld();
       if (World != NULL)
       {
         // spawn the projectile
         World->SpawnActor<AFernGullyLikeProjectile>(SpawnLocation, FireRotation);
+        DrawDebugLine(World, SpawnLocation, EndLocation, FColor(255, 0, 0), false, 5.f, 0, 50.f);
       }
 
       bCanFire = false;
