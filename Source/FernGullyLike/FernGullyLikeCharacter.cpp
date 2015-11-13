@@ -113,7 +113,7 @@ void AFernGullyLikeCharacter::FireShot(FVector FireDirection)
 
       FCollisionQueryParams traceParams(LaserTraceParams, true, this);
 
-      if(World->LineTraceSingleByChannel(hitRes, SpawnLocation, LaserEnd, ECC_WorldStatic, traceParams))
+      if(World->LineTraceSingleByChannel(hitRes, SpawnLocation, LaserEnd, ECC_PhysicsBody, traceParams))
         DrawDebugLine(World, SpawnLocation, hitRes.ImpactPoint, FColor(255, 0, 0), false, 5.f, 0, 25.f);
       else
         DrawDebugLine(World, SpawnLocation, LaserEnd, FColor(255, 127, 0), false, 3.f, 0, 10.f);
