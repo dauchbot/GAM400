@@ -3,6 +3,8 @@
 #include "GameFramework/Character.h"
 #include "FernGullyLikeCharacter.generated.h"
 
+#define EPSILON 0.000001f
+
 UCLASS(config=Game)
 class AFernGullyLikeCharacter : public ACharacter
 {
@@ -22,9 +24,25 @@ protected:
   UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
     float FireRate;
 
+  /* Timer for post damage invincibility */
+  UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+    float InvincibilityTimer;
+
+  /* Max time for invincibility */
+  UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+    float InvincibilityTime;
+
   /* Where is the laser reaching to */
   UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
     FVector LaserEnd;
+
+  /* Collision Normal for bouncing away */
+  UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+    FVector collNormal;
+
+  /* Last location */
+  UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+    FVector lastPosition;
 
   /** Sound to play each time we fire */
   UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
@@ -33,18 +51,20 @@ protected:
   // Begin Actor Interface
   virtual void Tick(float DeltaSeconds) override;
   virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
+
+  UFUNCTION(Category = Collision, BlueprintCallable)
+  virtual void OnHit(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
   // End Actor Interface
 
-  /** Called for side to side input */
-  void MoveRight(float Val);
-
-  /** Called for up-down input */
-  void MoveUp(float Val);
+  /* Handle Collision */
+  void CheckMovement(FVector& Movement);
 
   /* Fire a shot in the specified direction */
   void FireShot(FVector FireDirection);
 
   // Static names for axis bindings
+  static const FName MoveUpBinding;
+  static const FName MoveRightBinding;
   static const FName FireUpBinding;
   static const FName FireRightBinding;
 

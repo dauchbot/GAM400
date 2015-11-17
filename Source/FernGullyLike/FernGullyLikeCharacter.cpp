@@ -2,10 +2,11 @@
 
 #include "FernGullyLike.h"
 #include "FernGullyLikeCharacter.h"
-#include "FernGullyLikeProjectile.h"
 #include "TimerManager.h"
 #include "DrawDebugHelpers.h"
 
+const FName AFernGullyLikeCharacter::MoveUpBinding("MoveUp");
+const FName AFernGullyLikeCharacter::MoveRightBinding("MoveRight");
 const FName AFernGullyLikeCharacter::FireUpBinding("FireUp");
 const FName AFernGullyLikeCharacter::FireRightBinding("FireRight");
 const FName AFernGullyLikeCharacter::LaserTraceParams(TEXT("LaserTrace"));
@@ -18,6 +19,7 @@ AFernGullyLikeCharacter::AFernGullyLikeCharacter()
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 42.0f);
+  GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AFernGullyLikeCharacter::OnHit);
 
 	// Don't rotate when the controller rotates.
 	bUseControllerRotationPitch = false;
@@ -49,6 +51,8 @@ AFernGullyLikeCharacter::AFernGullyLikeCharacter()
   GetCharacterMovement()->SetGroundMovementMode(MOVE_Flying);
 
   // Movement
+  InvincibilityTimer = 0.f;
+  InvincibilityTime = 0.5f;
   // Weapon
   FireRate = 0.1f;
   bCanFire = true;
@@ -63,26 +67,32 @@ AFernGullyLikeCharacter::AFernGullyLikeCharacter()
 void AFernGullyLikeCharacter::SetupPlayerInputComponent(class UInputComponent* InputComponent)
 {
   // set up gameplay key bindings
-  InputComponent->BindAxis("MoveRight", this, &AFernGullyLikeCharacter::MoveRight);
-  InputComponent->BindAxis("MoveUp", this, &AFernGullyLikeCharacter::MoveUp);
-  InputComponent->BindAxis(FireRightBinding);
+  InputComponent->BindAxis(MoveUpBinding);
+  InputComponent->BindAxis(MoveRightBinding);
   InputComponent->BindAxis(FireUpBinding);
+  InputComponent->BindAxis(FireRightBinding);
 }
 
-void AFernGullyLikeCharacter::MoveRight(float Value)
-{
-  // add movement in that direction
-  AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
-}
 
-void AFernGullyLikeCharacter::MoveUp(float Value)
-{
-  // add movement in that direction
-  AddMovementInput(FVector(0.f, 0.f, 1.f), Value);
-}
 
 void AFernGullyLikeCharacter::Tick(float DeltaSeconds)
 {
+  // Create movement direction vector
+  const float MoveUpValue = GetInputAxisValue(MoveUpBinding);
+  const float MoveRightValue = GetInputAxisValue(MoveRightBinding);
+  FVector MoveDirection = FVector(0.f, -MoveRightValue, MoveUpValue);
+
+  if (InvincibilityTimer > EPSILON)
+    MoveDirection = MoveDirection.ZeroVector;
+
+  if (InvincibilityTimer < EPSILON)
+   // CheckMovement(MoveDirection);
+    AddMovementInput(MoveDirection);
+  else {
+    if (InvincibilityTimer >= InvincibilityTime/2.f)
+      AddMovementInput(collNormal, 3000.f);
+    InvincibilityTimer -= DeltaSeconds;
+  }
 
   // Create fire direction vector
   const float FireForwardValue = GetInputAxisValue(FireUpBinding);
@@ -91,6 +101,8 @@ void AFernGullyLikeCharacter::Tick(float DeltaSeconds)
 
   // Try and fire a shot
   FireShot(FireDirection);
+
+  lastPosition = GetCharacterMovement()->GetActorLocation();
 }
 
 void AFernGullyLikeCharacter::FireShot(FVector FireDirection)
@@ -127,4 +139,26 @@ void AFernGullyLikeCharacter::FireShot(FVector FireDirection)
   }
   else
     LaserEnd = LaserEnd.ZeroVector;
+}
+
+void AFernGullyLikeCharacter::CheckMovement(FVector& Movement)
+{
+  FHitResult hitRes;
+  GetCharacterMovement()->SafeMoveUpdatedComponent(Movement, Movement.Rotation(), true, hitRes);
+
+
+  if (hitRes.IsValidBlockingHit()) {
+    collNormal = hitRes.Normal;
+    AddMovementInput(collNormal, 1000.f);
+
+    InvincibilityTimer = InvincibilityTime;
+  }
+  else
+    AddMovementInput(Movement);
+}
+
+void AFernGullyLikeCharacter::OnHit(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+  collNormal = Hit.Normal;
+  InvincibilityTimer = InvincibilityTime;
 }
